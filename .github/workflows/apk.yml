@@ -1,0 +1,37 @@
+name: Build APK
+on:
+  push:
+    branches: [main, master]
+    paths: ['android/**', '.github/workflows/apk.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    env:
+      SITE_URL: https://sismopa.protectorado.workers.dev
+      HOST: sismopa.protectorado.workers.dev
+      KS_PASS: istmo-sismo-2026
+      KEYSTORE_PATH: ${{ github.workspace }}/android/istmo.keystore
+      VERSION_CODE: ${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17' }
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with: { gradle-version: '8.9' }
+      - name: Insertar URL del sitio
+        run: sed -i "s|__URL__|$SITE_URL|g; s|__HOST__|$HOST|g" android/app/src/main/AndroidManifest.xml android/app/src/main/res/values/strings.xml
+      - name: Compilar APK
+        working-directory: android
+        run: gradle --no-daemon assembleRelease
+      - name: Renombrar
+        run: cp android/app/build/outputs/apk/release/app-release.apk sismopty.apk
+      - name: Publicar en Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-latest
+          name: Sismo PA · APK
+          files: sismopty.apk
