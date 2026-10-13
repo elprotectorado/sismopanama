@@ -76,12 +76,24 @@ public class PermissionActivity extends Activity {
         return ContextCompat.checkSelfPermission(this, p) == PackageManager.PERMISSION_GRANTED;
     }
 
+    private boolean done = false;
+
     private void go() {
-        saveLocation();
-        AlertWorker.schedule(this);
-        Intent i = new Intent(this, com.google.androidbrowserhelper.trusted.LauncherActivity.class);
-        if (getIntent() != null && getIntent().getData() != null) i.setData(getIntent().getData());
-        startActivity(i);
+        if (done) return;
+        done = true;
+        try { saveLocation(); } catch (Throwable ignored) { }
+        try { AlertWorker.schedule(this); } catch (Throwable ignored) { }
+        try {
+            Intent i = new Intent(this, com.google.androidbrowserhelper.trusted.LauncherActivity.class);
+            if (getIntent() != null && getIntent().getData() != null) i.setData(getIntent().getData());
+            startActivity(i);
+        } catch (Throwable t) {
+            try {
+                Intent v = new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.site_url) + "/?src=pwa"));
+                v.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(v);
+            } catch (Throwable ignored) { }
+        }
         finish();
     }
 

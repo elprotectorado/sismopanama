@@ -25,5 +25,5 @@ App Android (TWA = Trusted Web Activity: abre la PWA en pantalla completa con Ch
 ### Qué hace la app Android
 - Pantalla de arranque que pide una sola vez notificaciones, ubicación y exención de optimización de batería.
 - `AlertWorker` (WorkManager): cada 15 min revisa `/api/quakes` aunque la app esté cerrada y avisa con la misma lógica de niveles de la web. Una petición pequeña por ciclo.
-- Notificaciones y ubicación de la web delegadas al sistema (`DelegationService`).
+
 - Web: pantalla de carga, arranque a prueba de fallos con pantalla «Reparar y reiniciar», modo ahorro de batería (sondeo cada 30 s, pausa en segundo plano, pantalla encendida desactivada por defecto).

@@ -28,11 +28,5 @@
       </intent-filter>
     </activity>
 
-    <service android:name=".DelegationService" android:enabled="true" android:exported="true">
-      <intent-filter>
-        <action android:name="android.support.customtabs.trusted.TRUSTED_WEB_ACTIVITY_SERVICE"/>
-        <category android:name="android.intent.category.DEFAULT"/>
-      </intent-filter>
-    </service>
   </application>
 </manifest>
