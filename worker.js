@@ -84,7 +84,7 @@ function energyJ(M) { return Math.pow(10, 1.5 * M + 4.8); }
 function feltKm(M) { return Math.pow(10, 0.45 * M - 0.1); }
 
 
-const VERSION = '2.0.mv5xewlm';
+const VERSION = '2.0.mv5yvawr';
 const IGC_URL = 'https://sismosgeociencias.up.ac.pa/';
 const IGC_TZ = '-05:00'; // Panamá no usa horario de verano
 const UA = 'Mozilla/5.0 (compatible; SismoPanamaISTMO/2.0; +https://github.com/elprotectorado)';
@@ -1328,6 +1328,7 @@ const TILES = {
   vec: { name: 'Vectorial', vec: true },
   sat: { name: 'Satélite', u: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', o: { maxZoom: 18, attribution: 'Imágenes © Esri' } },
   street: { name: 'Calles', u: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', o: { maxZoom: 19, attribution: '© OpenStreetMap' } },
+  carto: { name: 'CARTO', u: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?api_key=cb1_4il6_1_e0fe1665033c7dd845d84044', o: { subdomains: 'abcd', maxZoom: 20, attribution: '© OpenStreetMap © CARTO' } },
   topo: { name: 'Relieve', u: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', o: { subdomains: 'abc', maxZoom: 17, attribution: '© OpenTopoMap' } }
 };
 /* Mapa vectorial propio (sin proveedores ni claves): geometría de GEO (app-0-geo.js) */
@@ -2031,7 +2032,7 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 `;
 const SWJS = `/* ISTMO · Service Worker — caché offline, Web Push, notificaciones con acciones, sincronización periódica */
 importScripts('/shared.js');
-const V = '2.0.mv5xewlm';
+const V = '2.0.mv5yvawr';
 const SHELL = 'istmo-shell-' + V, TILES = 'istmo-tiles', DATA = 'istmo-data', META = 'sismo-meta';
 const PRE = ['/', '/app.css', '/app.js', '/shared.js', '/icon.svg', '/icon-192.png', '/manifest.webmanifest'];
 const CDN = ['https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css'];
@@ -2060,7 +2061,7 @@ self.addEventListener('fetch', (e) => {
     e.respondWith(fetch(r).then((res) => { if (res.ok) { const cp = res.clone(); caches.open(DATA).then((c) => c.put(r, cp)); } return res; }).catch(() => caches.match(r).then((h) => h || new Response('{"error":"offline","quakes":[]}', { status: 503, headers: { 'content-type': 'application/json' } }))));
     return;
   }
-  if (/tile\\.openstreetmap\\.org|tile\\.opentopomap\\.org|arcgisonline\\.com/.test(u.hostname)) { // teselas: caché primero
+  if (/tile\\.openstreetmap\\.org|tile\\.opentopomap\\.org|arcgisonline\\.com|basemaps\\.cartocdn\\.com/.test(u.hostname)) { // teselas: caché primero
     e.respondWith(caches.open(TILES).then(async (c) => { const h = await c.match(r); if (h) return h; try { const res = await fetch(r); if (res.ok || res.type === 'opaque') { c.put(r, res.clone()); trim(TILES, 400); } return res; } catch (err) { return h || Response.error(); } }));
     return;
   }

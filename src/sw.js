@@ -29,7 +29,7 @@ self.addEventListener('fetch', (e) => {
     e.respondWith(fetch(r).then((res) => { if (res.ok) { const cp = res.clone(); caches.open(DATA).then((c) => c.put(r, cp)); } return res; }).catch(() => caches.match(r).then((h) => h || new Response('{"error":"offline","quakes":[]}', { status: 503, headers: { 'content-type': 'application/json' } }))));
     return;
   }
-  if (/tile\.openstreetmap\.org|tile\.opentopomap\.org|arcgisonline\.com/.test(u.hostname)) { // teselas: caché primero
+  if (/tile\.openstreetmap\.org|tile\.opentopomap\.org|arcgisonline\.com|basemaps\.cartocdn\.com/.test(u.hostname)) { // teselas: caché primero
     e.respondWith(caches.open(TILES).then(async (c) => { const h = await c.match(r); if (h) return h; try { const res = await fetch(r); if (res.ok || res.type === 'opaque') { c.put(r, res.clone()); trim(TILES, 400); } return res; } catch (err) { return h || Response.error(); } }));
     return;
   }
