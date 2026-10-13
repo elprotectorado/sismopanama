@@ -1,4 +1,6 @@
 plugins { id 'com.android.application' }
+def vcString = System.getenv('VERSION_CODE') ?: '1'
+def vc = vcString.isInteger() ? Integer.parseInt(vcString) : 1
 android {
   namespace 'pa.istmo.sismo'
   compileSdk 34
@@ -6,8 +8,8 @@ android {
     applicationId 'pa.istmo.sismo'
     minSdk 21
     targetSdk 34
-    versionCode (System.getenv('VERSION_CODE') ?: '1').toInteger()
-    versionName '1.0.' + (System.getenv('VERSION_CODE') ?: '1')
+    versionCode = vc
+    versionName = "1.0.${vc}"
   }
   signingConfigs {
     release {
