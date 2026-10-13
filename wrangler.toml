@@ -1,11 +1,9 @@
 name = "sismopa"
 main = "worker.js"
 compatibility_date = "2025-01-01"
+[[kv_namespaces]]
+binding = "SISMO_KV"
+id = "2e82af17a8264187bb9774a0e5a5c962"
 
-# Opcional (para Push con la app cerrada):
-# [[kv_namespaces]]
-# binding = "SISMO_KV"
-# id = "<ID_DE_TU_KV>"
-#
-# [triggers]
-# crons = ["* * * * *"]
+[triggers]
+crons = ["* * * * *"]
