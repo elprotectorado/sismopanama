@@ -543,10 +543,10 @@ export default {
       if (p === '/icon-512.png') return new Response(await iconPNG(512), { headers: { 'content-type': 'image/png', 'cache-control': 'public, max-age=86400' } });
       if (p === '/favicon.ico') return new Response(await iconPNG(192), { headers: { 'content-type': 'image/png', 'cache-control': 'public, max-age=86400' } });
       if (p === '/.well-known/assetlinks.json') {
-        const fp = String(env.TWA_SHA256 || '').split(',').map((s) => s.trim()).filter(Boolean);
+        const fp = String(env.TWA_SHA256 || '__TWA_FP__').split(',').map((s) => s.trim()).filter(Boolean);
         return json(fp.length ? [{ relation: ['delegate_permission/common.handle_all_urls'], target: { namespace: 'android_app', package_name: env.TWA_PACKAGE || 'pa.istmo.sismo', sha256_cert_fingerprints: fp } }] : [], 200, { 'cache-control': 'public, max-age=300' });
       }
-      if (p === '/app.apk') return env.APK_URL ? Response.redirect(env.APK_URL, 302) : new Response('APK no disponible', { status: 404, headers: { 'content-type': 'text/plain; charset=utf-8' } });
+      if (p === '/app.apk') return Response.redirect(env.APK_URL || 'https://github.com/elprotectorado/sismopanama/releases/download/apk-latest/sismopty.apk', 302);
       if (p === '/health') return text('ok', 'text/plain');
       if (p === '/api' || p.startsWith('/api/') || p === '/docs') return await handleApi(req, env, url);
       return new Response('No encontrado', { status: 404, headers: { 'content-type': 'text/plain; charset=utf-8' } });

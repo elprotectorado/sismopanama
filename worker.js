@@ -84,7 +84,7 @@ function energyJ(M) { return Math.pow(10, 1.5 * M + 4.8); }
 function feltKm(M) { return Math.pow(10, 0.45 * M - 0.1); }
 
 
-const VERSION = '2.0.mv5z5pua';
+const VERSION = '2.0.mv5zf80t';
 const IGC_URL = 'https://sismosgeociencias.up.ac.pa/';
 const IGC_TZ = '-05:00'; // Panamá no usa horario de verano
 const UA = 'Mozilla/5.0 (compatible; SismoPanamaISTMO/2.0; +https://github.com/elprotectorado)';
@@ -2035,7 +2035,7 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 `;
 const SWJS = `/* ISTMO · Service Worker — caché offline, Web Push, notificaciones con acciones, sincronización periódica */
 importScripts('/shared.js');
-const V = '2.0.mv5z5pua';
+const V = '2.0.mv5zf80t';
 const SHELL = 'istmo-shell-' + V, TILES = 'istmo-tiles', DATA = 'istmo-data', META = 'sismo-meta';
 const PRE = ['/', '/app.css', '/app.js', '/shared.js', '/icon.svg', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png', '/manifest.webmanifest'];
 const CDN = ['https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css'];
@@ -2380,10 +2380,10 @@ export default {
       if (p === '/icon-512.png') return new Response(await iconPNG(512), { headers: { 'content-type': 'image/png', 'cache-control': 'public, max-age=86400' } });
       if (p === '/favicon.ico') return new Response(await iconPNG(192), { headers: { 'content-type': 'image/png', 'cache-control': 'public, max-age=86400' } });
       if (p === '/.well-known/assetlinks.json') {
-        const fp = String(env.TWA_SHA256 || '').split(',').map((s) => s.trim()).filter(Boolean);
+        const fp = String(env.TWA_SHA256 || '61:8A:D7:51:86:18:3D:DA:46:86:1F:FD:8E:A7:32:49:00:CD:28:C9:6D:52:12:96:F0:6A:19:CE:3E:A3:30:8F').split(',').map((s) => s.trim()).filter(Boolean);
         return json(fp.length ? [{ relation: ['delegate_permission/common.handle_all_urls'], target: { namespace: 'android_app', package_name: env.TWA_PACKAGE || 'pa.istmo.sismo', sha256_cert_fingerprints: fp } }] : [], 200, { 'cache-control': 'public, max-age=300' });
       }
-      if (p === '/app.apk') return env.APK_URL ? Response.redirect(env.APK_URL, 302) : new Response('APK no disponible', { status: 404, headers: { 'content-type': 'text/plain; charset=utf-8' } });
+      if (p === '/app.apk') return Response.redirect(env.APK_URL || 'https://github.com/elprotectorado/sismopanama/releases/download/apk-latest/sismopty.apk', 302);
       if (p === '/health') return text('ok', 'text/plain');
       if (p === '/api' || p.startsWith('/api/') || p === '/docs') return await handleApi(req, env, url);
       return new Response('No encontrado', { status: 404, headers: { 'content-type': 'text/plain; charset=utf-8' } });

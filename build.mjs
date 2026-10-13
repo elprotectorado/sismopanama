@@ -16,5 +16,7 @@ const rep = {
 for (const k of Object.keys(rep)) out = out.split(k).join('\u0000' + k + '\u0000');
 for (const k of Object.keys(rep)) out = out.split('\u0000' + k + '\u0000').join(rep[k]());
 out = out.split('__VERSION__').join(version);
+let fp = ''; try { fp = fs.readFileSync('android/fingerprint.txt', 'utf8').trim(); } catch (e) { }
+out = out.split('__TWA_FP__').join(fp);
 fs.writeFileSync('worker.js', out);
 console.log('worker.js', out.length, 'bytes, version', version);
