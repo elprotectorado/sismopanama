@@ -77,6 +77,7 @@ function platformInfo() {
 function installSteps() {
   const P = platformInfo();
   if (isStandalone()) return ['Ya tienes la app instalada y abierta como aplicación.'];
+  if (/FBAN|FBAV|FB_IAB|Instagram|WhatsApp|Line\/|MicroMessenger|TikTok|Snapchat|Twitter|; wv\)/i.test(navigator.userAgent)) return ['Estás en el navegador interno de otra app, que <b>no puede instalar</b>.', 'Toca el menú ⋮ (o <b>Compartir</b>) → <b>Abrir en Chrome</b> / <b>Abrir en Safari</b>.', 'Ya en el navegador, vuelve a tocar <b>Instalar app</b>.'];
   if (P.ios) return P.safari || /crios|fxios|edg/i.test(navigator.userAgent) ? ['Toca el botón <b>Compartir</b> (cuadrado con flecha hacia arriba).', 'Desliza y elige <b>Añadir a pantalla de inicio</b>.', 'Activa <b>Abrir como app web</b> si aparece y toca <b>Añadir</b>.', 'Ábrela desde el nuevo icono: iPhone/iPad 16.4 o superior permite notificaciones push solo desde ese icono.'] : ['En iPhone/iPad abre este enlace en <b>Safari</b> o Chrome.', 'Toca <b>Compartir → Añadir a pantalla de inicio</b>.'];
   if (P.android) return deferredInstall ? ['Toca el botón <b>Instalar ahora</b> de abajo.', 'Confirma en el aviso del sistema.', 'Abre “Sismo PA” desde tu pantalla de inicio.'] : [P.samsung ? 'Menú ≡ → <b>Añadir página a</b> → <b>Pantalla de inicio</b>.' : 'Menú ⋮ del navegador → <b>Instalar aplicación</b> (o <b>Añadir a la pantalla de inicio</b>).', 'Confirma con <b>Instalar</b>.', 'Abre “Sismo PA” desde tu pantalla de inicio.'];
   if (P.mac && P.safari) return ['Menú <b>Archivo → Añadir al Dock…</b> (macOS Sonoma o superior).', 'Confirma el nombre y toca <b>Añadir</b>.'];
@@ -96,6 +97,7 @@ function openInstall() {
   el.classList.add('on');
   $('#iX').onclick = () => el.classList.remove('on'); el.onclick = (e) => { if (e.target === el) el.classList.remove('on'); };
   const g = $('#iGo'); if (g) g.onclick = async () => { await doInstall(); el.classList.remove('on'); };
+  if (platformInfo().android) fetch('/app.apk', { method: 'HEAD', redirect: 'manual', cache: 'no-store' }).then((r) => { if (r.type === 'opaqueredirect' || r.ok) { const b = document.createElement('div'); b.style.cssText = 'margin:10px 0'; b.innerHTML = '<a class="btn" href="/app.apk" download>Descargar APK (Android)</a>'; const q = el.querySelector('.qr'); if (q) q.parentNode.insertBefore(b, q); } }).catch(() => { });
   $('#iCopy').onclick = async () => { try { await navigator.clipboard.writeText(location.origin); toast('Enlace copiado', location.origin, 'good', 2500); } catch (e) { toast(location.origin, '', '', 6000); } };
 }
 function maybeSuggestInstall() {

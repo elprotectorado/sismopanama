@@ -84,7 +84,7 @@ function energyJ(M) { return Math.pow(10, 1.5 * M + 4.8); }
 function feltKm(M) { return Math.pow(10, 0.45 * M - 0.1); }
 
 
-const VERSION = '2.0.mv5yvawr';
+const VERSION = '2.0.mv5z5pua';
 const IGC_URL = 'https://sismosgeociencias.up.ac.pa/';
 const IGC_TZ = '-05:00'; // Panamá no usa horario de verano
 const UA = 'Mozilla/5.0 (compatible; SismoPanamaISTMO/2.0; +https://github.com/elprotectorado)';
@@ -1226,6 +1226,7 @@ async function notify(title, body, tag, o) {
   catch (e) { try { new Notification(title, { body, tag, icon: '/icon-192.png' }); } catch (_) { } }
 }
 function osNotify(q, lvl, isRep, kind, force) {
+  if (!('Notification' in window)) return;
   if (Notification.permission !== 'granted' && !force) return;
   const d = Math.round(km(user, q)), head = kind === 'upd' ? 'ACTUALIZADO · ' : '';
   const title = q.local ? 'Movimiento local detectado' : isRep ? head + '↺ Réplica M' + q.mag.toFixed(1) : lvl === 3 ? head + '🔴 SISMO FUERTE · M' + q.mag.toFixed(1) : lvl === 2 ? head + '🟠 ALERTA · M' + q.mag.toFixed(1) : head + '🔵 Sismo M' + q.mag.toFixed(1);
@@ -1956,6 +1957,7 @@ function platformInfo() {
 function installSteps() {
   const P = platformInfo();
   if (isStandalone()) return ['Ya tienes la app instalada y abierta como aplicación.'];
+  if (/FBAN|FBAV|FB_IAB|Instagram|WhatsApp|Line\\/|MicroMessenger|TikTok|Snapchat|Twitter|; wv\\)/i.test(navigator.userAgent)) return ['Estás en el navegador interno de otra app, que <b>no puede instalar</b>.', 'Toca el menú ⋮ (o <b>Compartir</b>) → <b>Abrir en Chrome</b> / <b>Abrir en Safari</b>.', 'Ya en el navegador, vuelve a tocar <b>Instalar app</b>.'];
   if (P.ios) return P.safari || /crios|fxios|edg/i.test(navigator.userAgent) ? ['Toca el botón <b>Compartir</b> (cuadrado con flecha hacia arriba).', 'Desliza y elige <b>Añadir a pantalla de inicio</b>.', 'Activa <b>Abrir como app web</b> si aparece y toca <b>Añadir</b>.', 'Ábrela desde el nuevo icono: iPhone/iPad 16.4 o superior permite notificaciones push solo desde ese icono.'] : ['En iPhone/iPad abre este enlace en <b>Safari</b> o Chrome.', 'Toca <b>Compartir → Añadir a pantalla de inicio</b>.'];
   if (P.android) return deferredInstall ? ['Toca el botón <b>Instalar ahora</b> de abajo.', 'Confirma en el aviso del sistema.', 'Abre “Sismo PA” desde tu pantalla de inicio.'] : [P.samsung ? 'Menú ≡ → <b>Añadir página a</b> → <b>Pantalla de inicio</b>.' : 'Menú ⋮ del navegador → <b>Instalar aplicación</b> (o <b>Añadir a la pantalla de inicio</b>).', 'Confirma con <b>Instalar</b>.', 'Abre “Sismo PA” desde tu pantalla de inicio.'];
   if (P.mac && P.safari) return ['Menú <b>Archivo → Añadir al Dock…</b> (macOS Sonoma o superior).', 'Confirma el nombre y toca <b>Añadir</b>.'];
@@ -1975,6 +1977,7 @@ function openInstall() {
   el.classList.add('on');
   $('#iX').onclick = () => el.classList.remove('on'); el.onclick = (e) => { if (e.target === el) el.classList.remove('on'); };
   const g = $('#iGo'); if (g) g.onclick = async () => { await doInstall(); el.classList.remove('on'); };
+  if (platformInfo().android) fetch('/app.apk', { method: 'HEAD', redirect: 'manual', cache: 'no-store' }).then((r) => { if (r.type === 'opaqueredirect' || r.ok) { const b = document.createElement('div'); b.style.cssText = 'margin:10px 0'; b.innerHTML = '<a class="btn" href="/app.apk" download>Descargar APK (Android)</a>'; const q = el.querySelector('.qr'); if (q) q.parentNode.insertBefore(b, q); } }).catch(() => { });
   $('#iCopy').onclick = async () => { try { await navigator.clipboard.writeText(location.origin); toast('Enlace copiado', location.origin, 'good', 2500); } catch (e) { toast(location.origin, '', '', 6000); } };
 }
 function maybeSuggestInstall() {
@@ -2032,9 +2035,9 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 `;
 const SWJS = `/* ISTMO · Service Worker — caché offline, Web Push, notificaciones con acciones, sincronización periódica */
 importScripts('/shared.js');
-const V = '2.0.mv5yvawr';
+const V = '2.0.mv5z5pua';
 const SHELL = 'istmo-shell-' + V, TILES = 'istmo-tiles', DATA = 'istmo-data', META = 'sismo-meta';
-const PRE = ['/', '/app.css', '/app.js', '/shared.js', '/icon.svg', '/icon-192.png', '/manifest.webmanifest'];
+const PRE = ['/', '/app.css', '/app.js', '/shared.js', '/icon.svg', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png', '/manifest.webmanifest'];
 const CDN = ['https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css'];
 
 self.addEventListener('install', (e) => {
@@ -2048,7 +2051,7 @@ self.addEventListener('activate', (e) => {
   e.waitUntil((async () => {
     const ks = await caches.keys();
     await Promise.all(ks.filter((k) => k.startsWith('istmo-shell-') && k !== SHELL).map((k) => caches.delete(k)));
-    if (self.registration.navigationPreload) { try { await self.registration.navigationPreload.enable(); } catch (_) { } }
+    if (self.registration.navigationPreload) { try { await self.registration.navigationPreload.disable(); } catch (_) { } }
     await self.clients.claim();
   })());
 });
@@ -2058,18 +2061,19 @@ self.addEventListener('fetch', (e) => {
   const u = new URL(r.url);
   if (u.pathname.startsWith('/api/push')) return;
   if (u.origin === location.origin && u.pathname.startsWith('/api/')) { // datos: red primero, caché de respaldo
-    e.respondWith(fetch(r).then((res) => { if (res.ok) { const cp = res.clone(); caches.open(DATA).then((c) => c.put(r, cp)); } return res; }).catch(() => caches.match(r).then((h) => h || new Response('{"error":"offline","quakes":[]}', { status: 503, headers: { 'content-type': 'application/json' } }))));
+    e.respondWith(fetch(r).then((res) => { if (res.status === 200) { const cp = res.clone(); e.waitUntil(caches.open(DATA).then((c) => c.put(r, cp)).catch(() => { })); } return res; }).catch(() => caches.match(r).then((h) => h || new Response('{"error":"offline","quakes":[]}', { status: 503, headers: { 'content-type': 'application/json' } }))));
     return;
   }
   if (/tile\\.openstreetmap\\.org|tile\\.opentopomap\\.org|arcgisonline\\.com|basemaps\\.cartocdn\\.com/.test(u.hostname)) { // teselas: caché primero
-    e.respondWith(caches.open(TILES).then(async (c) => { const h = await c.match(r); if (h) return h; try { const res = await fetch(r); if (res.ok || res.type === 'opaque') { c.put(r, res.clone()); trim(TILES, 400); } return res; } catch (err) { return h || Response.error(); } }));
+    e.respondWith(caches.open(TILES).then(async (c) => { const h = await c.match(r); if (h) return h; try { const res = await fetch(r); if (res.status === 200 || res.type === 'opaque') { try { await c.put(r, res.clone()); trim(TILES, 400); } catch (_) { } } return res; } catch (err) { return h || Response.error(); } }));
     return;
   }
   if (u.origin === location.origin || u.hostname === 'cdnjs.cloudflare.com') { // app: caché primero, actualiza en segundo plano
     e.respondWith((async () => {
       const hit = await caches.match(r, { ignoreSearch: r.mode === 'navigate' });
-      const net = fetch(r).then((res) => { if (res.ok) { const cp = res.clone(); caches.open(SHELL).then((c) => c.put(r.mode === 'navigate' ? '/' : r, cp)); } return res; }).catch(() => null);
-      return hit || (await net) || (await caches.match('/')) || Response.error();
+      const net = fetch(r).then(async (res) => { if (res.status === 200) { try { const c = await caches.open(SHELL); await c.put(r.mode === 'navigate' ? '/' : r, res.clone()); } catch (_) { } } return res; }).catch(() => null);
+      if (hit) { e.waitUntil(net); return hit; }
+      return (await net) || (await caches.match('/')) || new Response('Sin conexión', { status: 503, headers: { 'content-type': 'text/plain; charset=utf-8' } });
     })());
   }
 });
@@ -2374,6 +2378,12 @@ export default {
       if (p === '/icon.svg') return text(ICON_SVG, 'image/svg+xml', { 'cache-control': 'public, max-age=86400' });
       if (p === '/icon-192.png' || p === '/apple-touch-icon.png') return new Response(await iconPNG(192), { headers: { 'content-type': 'image/png', 'cache-control': 'public, max-age=86400' } });
       if (p === '/icon-512.png') return new Response(await iconPNG(512), { headers: { 'content-type': 'image/png', 'cache-control': 'public, max-age=86400' } });
+      if (p === '/favicon.ico') return new Response(await iconPNG(192), { headers: { 'content-type': 'image/png', 'cache-control': 'public, max-age=86400' } });
+      if (p === '/.well-known/assetlinks.json') {
+        const fp = String(env.TWA_SHA256 || '').split(',').map((s) => s.trim()).filter(Boolean);
+        return json(fp.length ? [{ relation: ['delegate_permission/common.handle_all_urls'], target: { namespace: 'android_app', package_name: env.TWA_PACKAGE || 'pa.istmo.sismo', sha256_cert_fingerprints: fp } }] : [], 200, { 'cache-control': 'public, max-age=300' });
+      }
+      if (p === '/app.apk') return env.APK_URL ? Response.redirect(env.APK_URL, 302) : new Response('APK no disponible', { status: 404, headers: { 'content-type': 'text/plain; charset=utf-8' } });
       if (p === '/health') return text('ok', 'text/plain');
       if (p === '/api' || p.startsWith('/api/') || p === '/docs') return await handleApi(req, env, url);
       return new Response('No encontrado', { status: 404, headers: { 'content-type': 'text/plain; charset=utf-8' } });

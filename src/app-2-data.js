@@ -212,6 +212,7 @@ async function notify(title, body, tag, o) {
   catch (e) { try { new Notification(title, { body, tag, icon: '/icon-192.png' }); } catch (_) { } }
 }
 function osNotify(q, lvl, isRep, kind, force) {
+  if (!('Notification' in window)) return;
   if (Notification.permission !== 'granted' && !force) return;
   const d = Math.round(km(user, q)), head = kind === 'upd' ? 'ACTUALIZADO · ' : '';
   const title = q.local ? 'Movimiento local detectado' : isRep ? head + '↺ Réplica M' + q.mag.toFixed(1) : lvl === 3 ? head + '🔴 SISMO FUERTE · M' + q.mag.toFixed(1) : lvl === 2 ? head + '🟠 ALERTA · M' + q.mag.toFixed(1) : head + '🔵 Sismo M' + q.mag.toFixed(1);

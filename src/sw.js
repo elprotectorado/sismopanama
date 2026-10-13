@@ -2,7 +2,7 @@
 importScripts('/shared.js');
 const V = '__VERSION__';
 const SHELL = 'istmo-shell-' + V, TILES = 'istmo-tiles', DATA = 'istmo-data', META = 'sismo-meta';
-const PRE = ['/', '/app.css', '/app.js', '/shared.js', '/icon.svg', '/icon-192.png', '/manifest.webmanifest'];
+const PRE = ['/', '/app.css', '/app.js', '/shared.js', '/icon.svg', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png', '/manifest.webmanifest'];
 const CDN = ['https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css'];
 
 self.addEventListener('install', (e) => {
@@ -16,7 +16,7 @@ self.addEventListener('activate', (e) => {
   e.waitUntil((async () => {
     const ks = await caches.keys();
     await Promise.all(ks.filter((k) => k.startsWith('istmo-shell-') && k !== SHELL).map((k) => caches.delete(k)));
-    if (self.registration.navigationPreload) { try { await self.registration.navigationPreload.enable(); } catch (_) { } }
+    if (self.registration.navigationPreload) { try { await self.registration.navigationPreload.disable(); } catch (_) { } }
     await self.clients.claim();
   })());
 });
@@ -26,18 +26,19 @@ self.addEventListener('fetch', (e) => {
   const u = new URL(r.url);
   if (u.pathname.startsWith('/api/push')) return;
   if (u.origin === location.origin && u.pathname.startsWith('/api/')) { // datos: red primero, caché de respaldo
-    e.respondWith(fetch(r).then((res) => { if (res.ok) { const cp = res.clone(); caches.open(DATA).then((c) => c.put(r, cp)); } return res; }).catch(() => caches.match(r).then((h) => h || new Response('{"error":"offline","quakes":[]}', { status: 503, headers: { 'content-type': 'application/json' } }))));
+    e.respondWith(fetch(r).then((res) => { if (res.status === 200) { const cp = res.clone(); e.waitUntil(caches.open(DATA).then((c) => c.put(r, cp)).catch(() => { })); } return res; }).catch(() => caches.match(r).then((h) => h || new Response('{"error":"offline","quakes":[]}', { status: 503, headers: { 'content-type': 'application/json' } }))));
     return;
   }
   if (/tile\.openstreetmap\.org|tile\.opentopomap\.org|arcgisonline\.com|basemaps\.cartocdn\.com/.test(u.hostname)) { // teselas: caché primero
-    e.respondWith(caches.open(TILES).then(async (c) => { const h = await c.match(r); if (h) return h; try { const res = await fetch(r); if (res.ok || res.type === 'opaque') { c.put(r, res.clone()); trim(TILES, 400); } return res; } catch (err) { return h || Response.error(); } }));
+    e.respondWith(caches.open(TILES).then(async (c) => { const h = await c.match(r); if (h) return h; try { const res = await fetch(r); if (res.status === 200 || res.type === 'opaque') { try { await c.put(r, res.clone()); trim(TILES, 400); } catch (_) { } } return res; } catch (err) { return h || Response.error(); } }));
     return;
   }
   if (u.origin === location.origin || u.hostname === 'cdnjs.cloudflare.com') { // app: caché primero, actualiza en segundo plano
     e.respondWith((async () => {
       const hit = await caches.match(r, { ignoreSearch: r.mode === 'navigate' });
-      const net = fetch(r).then((res) => { if (res.ok) { const cp = res.clone(); caches.open(SHELL).then((c) => c.put(r.mode === 'navigate' ? '/' : r, cp)); } return res; }).catch(() => null);
-      return hit || (await net) || (await caches.match('/')) || Response.error();
+      const net = fetch(r).then(async (res) => { if (res.status === 200) { try { const c = await caches.open(SHELL); await c.put(r.mode === 'navigate' ? '/' : r, res.clone()); } catch (_) { } } return res; }).catch(() => null);
+      if (hit) { e.waitUntil(net); return hit; }
+      return (await net) || (await caches.match('/')) || new Response('Sin conexión', { status: 503, headers: { 'content-type': 'text/plain; charset=utf-8' } });
     })());
   }
 });
