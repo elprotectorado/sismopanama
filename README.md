@@ -21,3 +21,9 @@ App Android (TWA = Trusted Web Activity: abre la PWA en pantalla completa con Ch
 - `.github/workflows/apk.yml` compila `android/` en cada push a `main` y publica `sismopty.apk` en Releases (`apk-latest`).
 - La llave `android/istmo.keystore` y su huella `android/fingerprint.txt` van en el repo; `build.mjs` incrusta la huella en `/.well-known/assetlinks.json`. No hay variables ni secretos que configurar.
 - Descarga: `/app.apk` redirige al último APK (botón en el asistente de instalación en Android).
+
+### Qué hace la app Android
+- Pantalla de arranque que pide una sola vez notificaciones, ubicación y exención de optimización de batería.
+- `AlertWorker` (WorkManager): cada 15 min revisa `/api/quakes` aunque la app esté cerrada y avisa con la misma lógica de niveles de la web. Una petición pequeña por ciclo.
+- Notificaciones y ubicación de la web delegadas al sistema (`DelegationService`).
+- Web: pantalla de carga, arranque a prueba de fallos con pantalla «Reparar y reiniciar», modo ahorro de batería (sondeo cada 30 s, pausa en segundo plano, pantalla encendida desactivada por defecto).

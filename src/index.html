@@ -19,8 +19,35 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="stylesheet" href="/app.css">
 <title>Sismo Panamá · ISTMO</title>
+<style>
+#boot{position:fixed;inset:0;z-index:120;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:radial-gradient(800px 480px at 50% 30%,#0d3145 0,#040a12 70%);color:#e8f4f8;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;transition:opacity .45s}
+#boot.out{opacity:0;pointer-events:none}
+#boot .ring{position:relative;width:104px;height:104px;display:grid;place-items:center}
+#boot .ring img{width:84px;height:84px;border-radius:22px;position:relative;z-index:1}
+#boot .ring::before,#boot .ring::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid rgba(39,240,196,.55);animation:bping 1.8s ease-out infinite}
+#boot .ring::after{animation-delay:.9s}
+#boot b{letter-spacing:.2em;font-size:20px}#boot b i{font-style:normal;color:#27f0c4}
+#boot .bar{width:150px;height:3px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden}
+#boot .bar span{display:block;width:40%;height:100%;background:#27f0c4;border-radius:3px;animation:bbar 1.1s ease-in-out infinite}
+#boot small{opacity:.6;font-size:12px}
+@keyframes bping{0%{transform:scale(.7);opacity:.9}100%{transform:scale(1.35);opacity:0}}
+@keyframes bbar{0%{transform:translateX(-120%)}100%{transform:translateX(320%)}}
+#fatal{position:fixed;inset:0;z-index:130;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(2,6,12,.96);color:#e8f4f8;font-family:system-ui,sans-serif}
+#fatal .box{max-width:420px;text-align:center}#fatal h3{margin:0 0 8px;letter-spacing:.08em}#fatal p{opacity:.7;font-size:13px;word-break:break-word}
+#fatal button{margin:6px;padding:12px 18px;border-radius:12px;border:1px solid #27f0c4;background:transparent;color:#27f0c4;font-weight:700;font-size:14px}
+#fatal button.p{background:#27f0c4;color:#04121a}
+</style>
 </head>
 <body>
+<div id="boot" aria-live="polite"><div class="ring"><img src="/icon-192.png" alt=""></div><b>SISMO <i>PANAMÁ</i></b><div class="bar"><span></span></div><small id="bootT">Conectando con las redes sismológicas…</small></div>
+<div id="fatal" role="alertdialog"><div class="box"><h3>NO SE PUDO INICIAR</h3><p id="fatalT"></p><button class="p" id="fRetry">Reintentar</button><button id="fFix">Reparar y reiniciar</button></div></div>
+<script>
+window.__fatal=function(m){var e=document.getElementById('fatal');if(!e)return;document.getElementById('fatalT').textContent=String(m||'');e.style.display='flex';};
+window.addEventListener('error',function(ev){if(!window.__booted&&ev.message&&!/^Script error/.test(ev.message))window.__fatal(ev.message);});
+setTimeout(function(){if(!window.__booted)window.__fatal('La app no terminó de cargar. Revisa la conexión.');},9000);
+document.getElementById('fRetry').onclick=function(){location.reload();};
+document.getElementById('fFix').onclick=async function(){try{var r=await navigator.serviceWorker.getRegistrations();await Promise.all(r.map(function(x){return x.unregister();}));var k=await caches.keys();await Promise.all(k.map(function(x){return caches.delete(x);}));}catch(e){}location.reload();};
+</script>
 <div id="gate">
   <img class="logo" src="/icon-192.png" alt="">
   <h1>SISMO <b>PANAMÁ</b></h1>

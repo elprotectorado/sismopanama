@@ -35,7 +35,7 @@ function placeShort(p) { return String(p || '').replace(/^Panam[aá] a /i, ''); 
 const DEF = {
   city: 'pty', lat: 8.98, lon: -79.52, gps: true, m1: 3.5, m2: 5, full: 2, replicas: true,
   sound: true, vol: 0.85, profile: 'istmo', voice: true, vib: true, sensor: true, sens: 2,
-  persist: true, wake: true, kiosk: false, dim: false, map: 'vec', range: '24h', minMag: 0, onlyPan: true,
+  persist: true, wake: false, eco: true, kiosk: false, dim: false, map: 'vec', range: '24h', minMag: 0, onlyPan: true,
   links: true, waves: true, heat: false, push: false
 };
 let cfg = Object.assign({}, DEF, LS.get('cfg', {}));

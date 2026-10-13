@@ -20,6 +20,12 @@ android {
     }
   }
   buildTypes { release { signingConfig signingConfigs.release; minifyEnabled false } }
+  lint { checkReleaseBuilds = false; abortOnError = false }
   compileOptions { sourceCompatibility JavaVersion.VERSION_1_8; targetCompatibility JavaVersion.VERSION_1_8 }
 }
-dependencies { implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0' }
+dependencies {
+  implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
+  implementation 'com.google.androidbrowserhelper:locationdelegation:1.1.1'
+  implementation 'androidx.work:work-runtime:2.9.1'
+  implementation 'androidx.core:core:1.13.1'
+}

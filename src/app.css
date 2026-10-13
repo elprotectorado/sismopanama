@@ -263,3 +263,6 @@ body.kiosk #mTop,body.kiosk #mSide{display:none}
 #inst .st>b{flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:rgba(39,240,196,.16);color:var(--teal);font-size:12px}
 #inst .qr{display:flex;gap:14px;align-items:center;margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.03)}
 #inst .qr svg{flex:none;width:132px;height:132px;border-radius:10px;background:#fff;padding:6px}
+#go.busy{opacity:.7;pointer-events:none}
+#go.busy::after{content:"";display:inline-block;width:14px;height:14px;margin-left:10px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px}
+@keyframes spin{to{transform:rotate(360deg)}}

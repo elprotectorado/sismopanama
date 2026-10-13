@@ -34,19 +34,23 @@ function openFromUrl(u) {
 }
 
 /* ---------- Puerta de entrada (gesto del usuario) ---------- */
+function S(fn, name) { try { return fn(); } catch (e) { console.error('boot:' + (name || ''), e); (window.__bootErrs = window.__bootErrs || []).push((name || '') + ': ' + (e && e.message || e)); } }
+let pollT = null;
+function schedulePoll() { clearTimeout(pollT); pollT = setTimeout(async () => { if (!document.hidden) { try { await poll(); } catch (e) { } } schedulePoll(); }, cfg.eco ? 30000 : 12000); }
+function hideBoot() { const b = $('#boot'); if (b && !b.dataset.h) { b.dataset.h = 1; b.classList.add('out'); setTimeout(() => { try { b.remove(); } catch (e) { } }, 500); } }
 async function enter(full) {
   if (active) return; active = true;
-  const g = $('#gate'); g.style.opacity = '0'; setTimeout(() => { g.style.display = 'none'; }, 350);
+  const g = $('#gate'), btn = $('#go'); if (btn) btn.classList.add('busy');
+  g.style.opacity = '0'; setTimeout(() => { g.style.display = 'none'; }, 350);
   LS.set('gateDone', true);
+  S(applyDisplay, 'display'); S(() => map && map.invalidateSize(), 'map');
   if (full) {
-    goFs(); Snd.init(); Snd.play('info'); vib(60);
-    wakeLock();
-    ensureNotifPerm().then(() => persistNote());
-    sensorStart(true).then(() => { if (curTab === 'ajustes') liveAjustes(); });
-    if (cfg.gps && !LS.get('gpsAsked', false)) { LS.set('gpsAsked', true); gpsFix().then((ok) => { if (ok) { cfg.city = 'gps'; saveCfg(); renderAll(); toast('Ubicación detectada', 'Distancias y alertas calculadas desde tu posición', 'good'); } }); }
-  } else { sensorStart(false); }
-  applyDisplay(); map && map.invalidateSize();
-  speak.warm && speak.warm();
+    S(goFs, 'fs'); S(() => { Snd.init(); Snd.play('info'); }, 'snd'); S(() => vib(60), 'vib'); S(wakeLock, 'wake');
+    S(() => ensureNotifPerm().then(() => persistNote()).catch(() => { }), 'notif');
+    S(() => sensorStart(true).then(() => { if (curTab === 'ajustes') liveAjustes(); }).catch(() => { }), 'sensor');
+    S(() => { if (cfg.gps && !LS.get('gpsAsked', false)) { LS.set('gpsAsked', true); gpsFix().then((ok) => { if (ok) { cfg.city = 'gps'; saveCfg(); renderAll(); toast('Ubicación detectada', 'Distancias y alertas calculadas desde tu posición', 'good'); } }); } }, 'gps');
+  } else S(() => sensorStart(false), 'sensor');
+  S(() => speak.warm && speak.warm(), 'voice');
 }
 
 /* ---------- Service worker ---------- */
@@ -109,32 +113,34 @@ function maybeSuggestInstall() {
 
 /* ---------- Arranque ---------- */
 function boot() {
-  buildNav(); applyDisplay(); initMap();
-  $('#go').addEventListener('click', () => enter(true));
-  $('#skip').addEventListener('click', () => enter(false));
-  $('#bFs').addEventListener('click', toggleFs);
+  S(() => { $('#go').addEventListener('click', () => enter(true)); $('#skip').addEventListener('click', () => enter(false)); }, 'gate');
+  S(buildNav, 'nav'); S(applyDisplay, 'display'); S(initMap, 'map');
+  S(() => $('#bFs').addEventListener('click', toggleFs), 'fs');
   $('#bMute').addEventListener('click', () => { cfg.sound = !cfg.sound; saveCfg(); applyDisplay(); if (cfg.sound) { Snd.init(); Snd.play('info'); } toast(cfg.sound ? 'Sonido activado' : 'Sonido silenciado', '', '', 1600); if (curTab === 'ajustes') renderAjustes(); });
   $('#rib').addEventListener('click', ribClick);
   $('#dim').addEventListener('dblclick', () => { cfg.dim = false; saveCfg(); applyDisplay(); });
-  goTab('radar');
+  S(() => goTab('radar'), 'tab');
   const p = new URL(location.href).searchParams, qid = p.get('q'), tab = p.get('tab');
-  if (tab) goTab(tab);
-  renderAll();
+  if (tab) S(() => goTab(tab), 'tab2');
+  S(renderAll, 'render');
   if (qid) setTimeout(() => openFromUrl(location.href), 500);
   if (p.get('install')) setTimeout(openInstall, 800);
   maybeSuggestInstall();
-  poll(); connectWS(); initSW(); pushCheck(); pollTsunami(); setInterval(pollTsunami, 5 * 60000);
-  setInterval(() => poll(), 12000);
+  const p0 = S(() => poll(), 'poll'); S(connectWS, 'ws'); S(initSW, 'sw'); S(pushCheck, 'push'); S(pollTsunami, 'tsu');
+  setInterval(() => { if (!document.hidden) S(pollTsunami, 'tsu'); }, 5 * 60000);
+  schedulePoll();
+  setTimeout(hideBoot, 4500); Promise.resolve(p0).then(() => setTimeout(hideBoot, 250), () => hideBoot());
   setInterval(() => { persistNote(); renderLeds(); }, 60000);
   setInterval(() => {
+    if (document.hidden) return;
     $('#clk').textContent = fClock.format(Date.now());
     try { tickWaves(); if (curTab === 'radar') renderHero(); if (curTab === 'ajustes') liveAjustes(); } catch (e) { }
   }, 1000);
-  setInterval(() => { try { drawRibbon(); if (!map) drawFallback(); } catch (e) { } }, 30000);
+  setInterval(() => { if (document.hidden) return; try { drawRibbon(); if (!map) drawFallback(); } catch (e) { } }, 30000);
   $('#clk').textContent = fClock.format(Date.now());
   window.addEventListener('online', () => { setOnline(true); poll(true); connectWS(); });
   window.addEventListener('offline', () => { setOnline(false); renderLeds(); });
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { wakeLock(); poll(true); renderLeds(); } else LS.set('lastOpen', Date.now()); });
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { S(wakeLock, 'wake'); poll(true); renderLeds(); S(() => { if (!ws || ws.readyState > 1) connectWS(); }, 'ws'); } else { LS.set('lastOpen', Date.now()); if (cfg.eco) { try { if (ws) ws.close(); } catch (e) { } } } });
   window.addEventListener('pagehide', () => LS.set('lastOpen', Date.now()));
   window.addEventListener('resize', debounce(() => { if (map) map.invalidateSize(); drawRibbon(); renderLeds(); if (!map) drawFallback(); if (['datos', 'replicas'].includes(curTab)) renderAll(); }, 200));
   document.addEventListener('fullscreenchange', () => { setTimeout(() => { if (map) map.invalidateSize(); }, 200); });
@@ -149,6 +155,7 @@ function boot() {
   if (isStandalone() && LS.get('gateDone', false)) { $('#go').textContent = 'ENTRAR'; }
   document.addEventListener('click', () => { if (active) Snd.init(); }, { once: false, passive: true });
   /* Primer sondeo con datos guardados mientras llega la red */
-  if (serverQ.length) rebuild();
+  S(() => { if (serverQ.length) rebuild(); }, 'cache');
+  window.__booted = true;
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();

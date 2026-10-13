@@ -33,6 +33,7 @@ const pollSoon = debounce(() => poll(true), 4000);
 /* EMSC en vivo por WebSocket (avisa antes de que otras redes publiquen) */
 let ws = null, wsTry = 0;
 function connectWS() {
+  if (document.hidden && cfg.eco) return;
   try { ws = new WebSocket('wss://www.seismicportal.eu/standing_order/websocket'); } catch (e) { return; }
   ws.onopen = () => { wsOn = true; wsTry = 0; renderLeds(); };
   ws.onmessage = (m) => {
@@ -44,7 +45,7 @@ function connectWS() {
       rebuild(); pollSoon();
     } catch (err) { }
   };
-  ws.onclose = () => { wsOn = false; renderLeds(); setTimeout(connectWS, Math.min(30000, 2000 * (++wsTry))); };
+  ws.onclose = () => { wsOn = false; renderLeds(); setTimeout(() => { if (!(document.hidden && cfg.eco)) connectWS(); }, Math.min(30000, 2000 * (++wsTry))); };
   ws.onerror = () => { try { ws.close(); } catch (e) { } };
 }
 function setOnline(v) { $('#offline').style.display = v ? 'none' : 'block'; }
@@ -275,7 +276,7 @@ let wl = null;
 async function wakeLock() { if (!cfg.wake || !('wakeLock' in navigator) || document.visibilityState !== 'visible') return; try { if (wl && !wl.released) return; wl = await navigator.wakeLock.request('screen'); } catch (e) { } }
 function goFs() { const el = document.documentElement; try { const f = el.requestFullscreen || el.webkitRequestFullscreen; if (f) f.call(el, { navigationUI: 'hide' }); } catch (e) { } }
 function toggleFs() { if (document.fullscreenElement || document.webkitFullscreenElement) { (document.exitFullscreen || document.webkitExitFullscreen).call(document); } else goFs(); }
-const isStandalone = () => matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches || navigator.standalone === true;
+const isStandalone = () => matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches || navigator.standalone === true || String(document.referrer).startsWith('android-app://');
 const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
 let deferredInstall = null;
 window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredInstall = e; if (typeof renderAjustes === 'function' && curTab === 'ajustes') renderAjustes(); });
